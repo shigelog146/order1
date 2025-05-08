@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>スイーツカフェ セルフオーダー</title>
+  <style>
+     body {
+      font-family: 'Yu Gothic', sans-serif;
+      background: #fff0f5;
+      color: #4b2e2e;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2em;
+      color: #d86c9b;
+    }
+    form {
+      background: #ffffff;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+      border-radius: 0px;
+      box-shadow: 0 0 10px rgba(216, 108, 155, 0.3);
+    }
+    label {
+      display: block;
+      margin-top: 0px;
+      font-weight: bold;
+      color: #d86c9b;
+    }
+    select, textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 1px;
+      margin-top: 5px;
+      font-size: 1em;
+    }
+    textarea {
+      resize: vertical;
+      height: 80px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #d86c9b;
+      border: none;
+      border-radius: 1px;
+      color: white;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #f0b6d1;
+      cursor: not-allowed;
+    }
+    .menu-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+  }
+
+  .menu-item {
+    position: relative;
+    width: calc(50% - 20px); /* 2列用 */
+    overflow: hidden;
+  }
+
+  .menu-item img {
+    width: 100%;
+    display: block;
+    border-radius: 0;
+  }
+
+  .menu-select {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(255,255,255,.7);
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  .menu-select label,
+  .menu-select select {
+    display: block;
+    width: 100%;
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+
+  @media (max-width: 600px) {
+    .menu-item {
+      width: 100%;
+    }
+  }
+  </style>
+</head>
+<body>
+  <h1>スイーツカフェ セルフオーダー(supabase)</h1>
+  <form id="orderForm">
+    <label for="table">テーブル番号</label>
+    <select id="table" name="table" required>
+      <option value="">選択してください</option>
+      <option value="1">テーブル1</option>
+      <option value="2">テーブル2</option>
+      <option value="3">テーブル3</option>
+      <option value="4">テーブル4</option>
+    </select>
+
+ 
+  <div class="menu-container">
+      <div class="menu-item">
+        <img src="images/parfait.jpg" alt="スイーツパフェ">
+        <div class="menu-select">
+          <label for="parfait">スイーツパフェ</label>
+          <select id="parfait" name="parfait">
+            <option value="0">選択してください</option>
+            <option value="1">1個</option>
+            <option value="2">2個</option>
+          </select>
+        </div>
+      </div>
+    
+      <div class="menu-item">
+        <img src="images/special.jpg" alt="スペシャルパフェ">
+        <div class="menu-select">
+          <label for="special">スペシャルパフェ</label>
+          <select id="special" name="special">
+            <option value="0">選択してください</option>
+            <option value="1">1個</option>
+            <option value="2">2個</option>
+          </select>
+        </div>
+      </div>
+    
+      <div class="menu-item">
+        <img src="images/plate.jpg" alt="スイーツプレート">
+        <div class="menu-select">
+          <label for="plate">スイーツプレート</label>
+          <select id="plate" name="plate">
+            <option value="0">選択してください</option>
+            <option value="1">1皿</option>
+            <option value="2">2皿</option>
+          </select>
+        </div>
+      </div>
+    
+      <div class="menu-item">
+        <img src="images/drink.jpg" alt="ドリンク">
+        <div class="menu-select">
+          <label for="drink">ドリンク</label>
+          <select id="drink" name="drink">
+            <option value="0">選択してください</option>
+            <option value="ブレンドコーヒー">ブレンドコーヒー</option>
+            <option value="アップルティー">アップルティー</option>
+            <option value="ミルクティー">ミルクティー</option>
+            <option value="レモンティー">レモンティー</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <label for="message">お店への連絡</label>
+    <textarea id="message" name="message" placeholder="アレルギー、テーブル上の要望など"></textarea>
+
+    <div class="submit-row">
+      <button type="submit" id="submitBtn" disabled>注文を送信</button>
+      <p id="thanksMessage">ご注文ありがとうございました。</p>
+    </div>
+    
+  </form>
+
+<script>
+    const form = document.getElementById('orderForm');
+    const submitBtn = document.getElementById('submitBtn');
+  
+    const SUPABASE_URL = "https://sdgdgkolzvymvhtwccyh.supabase.co";//https://sdgdgkolzvymvhtwccyh.supabase.co
+    const SUPABASE_TABLE = "orders"; // ← 作成したテーブル名に合わせて変更
+    const SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkZ2Rna29senZ5bXZodHdjY3loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1OTkwMzEsImV4cCI6MjA1ODE3NTAzMX0.YFWg6dpsmC-msTlk9j4a8smc0TnZB2eI3l0HhF1GLH8"; // SupabaseのAnonキー
+  
+    form.addEventListener('change', () => {
+      const hasOrder =
+        parseInt(form.parfait.value) > 0 ||
+        parseInt(form.special.value) > 0 ||
+        parseInt(form.plate.value) > 0 ||
+        form.drink.value !== "0";
+  
+      const hasTable = form.table.value !== "";
+  
+      submitBtn.disabled = !(hasOrder && hasTable);
+      document.getElementById('thanksMessage').style.display = 'none';
+    });
+  
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+  
+      const data = {
+  table_number: form.table.value, // ← 変更
+  parfait: parseInt(form.parfait.value),
+  special: parseInt(form.special.value),
+  plate: parseInt(form.plate.value),
+  drink: form.drink.value,
+  message: form.message.value.trim()
+};
+  
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_API_KEY,
+            "Authorization": `Bearer ${SUPABASE_API_KEY}`,
+            "Prefer": "return=minimal"
+          },
+          body: JSON.stringify(data)
+        });
+  
+        if (response.ok) {
+          alert("ご注文ありがとうございました！");
+          form.reset();
+          submitBtn.disabled = true;
+          document.getElementById('thanksMessage').style.display = 'block';
+        } else {
+          alert("送信エラーが発生しました。");
+          console.error(await response.text());
+        }
+      } catch (error) {
+        alert("通信エラーが発生しました。");
+        console.error(error);
+      }
+    });
+  </script>
+  
+</body>
+</html>
