@@ -97,6 +97,7 @@
 </head>
 <body>
   <h1>スイーツカフェ セルフオーダーQR</h1>
+  <p id="tableDisplay" style="text-align:center; font-size:1.2em; color:#d86c9b;"></p>
   <form id="orderForm">
 
     <div class="menu-container">
@@ -161,72 +162,83 @@
   </form>
 
   <script>
-    const form = document.getElementById('orderForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const thanksMessage = document.getElementById('thanksMessage');
-
-    // クエリパラメータからtable番号を取得
+  // 🔽 ここが追加部分
+  window.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
-    const TABLE_NUMBER = parseInt(params.get("table"), 10);
+    const tableParam = params.get('table');
 
-    if (!TABLE_NUMBER || isNaN(TABLE_NUMBER)) {
-      alert("QRコードのURLにテーブル番号が指定されていません（例: ?table=2）");
-      submitBtn.disabled = true;
-    }
+    if (tableParam) {
+      // セレクトボックスに自動反映
+      const tableSelect = document.getElementById('table');
+      if (tableSelect) tableSelect.value = tableParam;
 
-    const SUPABASE_URL = "https://sdgdgkolzvymvhtwccyh.supabase.co";
-    const SUPABASE_TABLE = "orders";
-    const SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkZ2Rna29senZ5bXZodHdjY3loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1OTkwMzEsImV4cCI6MjA1ODE3NTAzMX0.YFWg6dpsmC-msTlk9j4a8smc0TnZB2eI3l0HhF1GLH8";
-
-    form.addEventListener('change', () => {
-      const hasOrder =
-        parseInt(form.parfait.value) > 0 ||
-        parseInt(form.special.value) > 0 ||
-        parseInt(form.plate.value) > 0 ||
-        form.drink.value !== "0";
-
-      submitBtn.disabled = !hasOrder || !TABLE_NUMBER;
-      thanksMessage.style.display = 'none';
-    });
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const data = {
-        table_number: TABLE_NUMBER,
-        parfait: parseInt(form.parfait.value),
-        special: parseInt(form.special.value),
-        plate: parseInt(form.plate.value),
-        drink: form.drink.value,
-        message: form.message.value.trim()
-      };
-
-      try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "apikey": SUPABASE_API_KEY,
-            "Authorization": `Bearer ${SUPABASE_API_KEY}`,
-            "Prefer": "return=minimal"
-          },
-          body: JSON.stringify(data)
-        });
-
-        if (response.ok) {
-          alert("ご注文ありがとうございました！");
-          form.reset();
-          submitBtn.disabled = true;
-          thanksMessage.style.display = 'block';
-        } else {
-          alert("送信エラーが発生しました。");
-          console.error(await response.text());
-        }
-      } catch (error) {
-        alert("通信エラーが発生しました。");
-        console.error(error);
+      // 表示エリアにテーブル番号を表示
+      const tableDisplay = document.getElementById('tableDisplay');
+      if (tableDisplay) {
+        tableDisplay.textContent = `テーブル番号：${tableParam}`;
       }
-    });
-  </script>
+    }
+  });
+
+  // 🔽 以下、あなたがもともと書いていた注文処理のコード
+  const form = document.getElementById('orderForm');
+  const submitBtn = document.getElementById('submitBtn');
+
+  const SUPABASE_URL = "https://sdgdgkolzvymvhtwccyh.supabase.co";
+  const SUPABASE_TABLE = "orders";
+  const SUPABASE_API_KEY = "your-api-key";
+
+  form.addEventListener('change', () => {
+    const hasOrder =
+      parseInt(form.parfait.value) > 0 ||
+      parseInt(form.special.value) > 0 ||
+      parseInt(form.plate.value) > 0 ||
+      form.drink.value !== "0";
+
+    const hasTable = form.table.value !== "";
+
+    submitBtn.disabled = !(hasOrder && hasTable);
+    document.getElementById('thanksMessage').style.display = 'none';
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const data = {
+      table_number: form.table.value,
+      parfait: parseInt(form.parfait.value),
+      special: parseInt(form.special.value),
+      plate: parseInt(form.plate.value),
+      drink: form.drink.value,
+      message: form.message.value.trim()
+    };
+
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_API_KEY,
+          "Authorization": `Bearer ${SUPABASE_API_KEY}`,
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (response.ok) {
+        alert("ご注文ありがとうございました！");
+        form.reset();
+        submitBtn.disabled = true;
+        document.getElementById('thanksMessage').style.display = 'block';
+      } else {
+        alert("送信エラーが発生しました。");
+        console.error(await response.text());
+      }
+    } catch (error) {
+      alert("通信エラーが発生しました。");
+      console.error(error);
+    }
+  });
+</script>
 </body>
 </html>
