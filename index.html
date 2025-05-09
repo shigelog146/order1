@@ -1,10 +1,11 @@
+<!-- 省略せず全コードです -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>スイーツカフェ セルフオーダー</title>
+  <title>スイーツカフェ セルフオーダー（QR対応）</title>
   <style>
-     body {
+    body {
       font-family: 'Yu Gothic', sans-serif;
       background: #fff0f5;
       color: #4b2e2e;
@@ -56,63 +57,49 @@
       cursor: not-allowed;
     }
     .menu-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    justify-content: center;
-  }
-
-  .menu-item {
-    position: relative;
-    width: calc(50% - 20px); /* 2列用 */
-    overflow: hidden;
-  }
-
-  .menu-item img {
-    width: 100%;
-    display: block;
-    border-radius: 0;
-  }
-
-  .menu-select {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: rgba(255,255,255,.7);
-    padding: 10px;
-    box-sizing: border-box;
-  }
-
-  .menu-select label,
-  .menu-select select {
-    display: block;
-    width: 100%;
-    font-size: 14px;
-    margin-bottom: 5px;
-  }
-
-  @media (max-width: 600px) {
-    .menu-item {
-      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
     }
-  }
+    .menu-item {
+      position: relative;
+      width: calc(50% - 20px);
+      overflow: hidden;
+    }
+    .menu-item img {
+      width: 100%;
+      display: block;
+      border-radius: 0;
+    }
+    .menu-select {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(255,255,255,.7);
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    .menu-select label,
+    .menu-select select {
+      display: block;
+      width: 100%;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+    @media (max-width: 600px) {
+      .menu-item {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>スイーツカフェ セルフオーダー(supabase)</h1>
+  <h1>スイーツカフェ セルフオーダーQR</h1>
   <form id="orderForm">
-    <label for="table">テーブル番号</label>
-    <select id="table" name="table" required>
-      <option value="">選択してください</option>
-      <option value="1">テーブル1</option>
-      <option value="2">テーブル2</option>
-      <option value="3">テーブル3</option>
-      <option value="4">テーブル4</option>
-    </select>
 
- 
-  <div class="menu-container">
+    <div class="menu-container">
       <div class="menu-item">
         <img src="images/parfait.jpg" alt="スイーツパフェ">
         <div class="menu-select">
@@ -124,7 +111,7 @@
           </select>
         </div>
       </div>
-    
+
       <div class="menu-item">
         <img src="images/special.jpg" alt="スペシャルパフェ">
         <div class="menu-select">
@@ -136,7 +123,7 @@
           </select>
         </div>
       </div>
-    
+
       <div class="menu-item">
         <img src="images/plate.jpg" alt="スイーツプレート">
         <div class="menu-select">
@@ -148,7 +135,7 @@
           </select>
         </div>
       </div>
-    
+
       <div class="menu-item">
         <img src="images/drink.jpg" alt="ドリンク">
         <div class="menu-select">
@@ -164,49 +151,56 @@
       </div>
     </div>
 
-    <label for="message">お店への連絡</label>
+  <label for="message">お店への連絡</label>
     <textarea id="message" name="message" placeholder="アレルギー、テーブル上の要望など"></textarea>
 
     <div class="submit-row">
       <button type="submit" id="submitBtn" disabled>注文を送信</button>
-      <p id="thanksMessage">ご注文ありがとうございました。</p>
+      <p id="thanksMessage" style="display: none;">ご注文ありがとうございました。</p>
     </div>
-    
   </form>
 
-<script>
+  <script>
     const form = document.getElementById('orderForm');
     const submitBtn = document.getElementById('submitBtn');
-  
-    const SUPABASE_URL = "https://sdgdgkolzvymvhtwccyh.supabase.co";//https://sdgdgkolzvymvhtwccyh.supabase.co
-    const SUPABASE_TABLE = "orders"; // ← 作成したテーブル名に合わせて変更
-    const SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkZ2Rna29senZ5bXZodHdjY3loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1OTkwMzEsImV4cCI6MjA1ODE3NTAzMX0.YFWg6dpsmC-msTlk9j4a8smc0TnZB2eI3l0HhF1GLH8"; // SupabaseのAnonキー
-  
+    const thanksMessage = document.getElementById('thanksMessage');
+
+    // クエリパラメータからtable番号を取得
+    const params = new URLSearchParams(window.location.search);
+    const TABLE_NUMBER = parseInt(params.get("table"), 10);
+
+    if (!TABLE_NUMBER || isNaN(TABLE_NUMBER)) {
+      alert("QRコードのURLにテーブル番号が指定されていません（例: ?table=2）");
+      submitBtn.disabled = true;
+    }
+
+    const SUPABASE_URL = "https://sdgdgkolzvymvhtwccyh.supabase.co";
+    const SUPABASE_TABLE = "orders";
+    const SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkZ2Rna29senZ5bXZodHdjY3loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1OTkwMzEsImV4cCI6MjA1ODE3NTAzMX0.YFWg6dpsmC-msTlk9j4a8smc0TnZB2eI3l0HhF1GLH8";
+
     form.addEventListener('change', () => {
       const hasOrder =
         parseInt(form.parfait.value) > 0 ||
         parseInt(form.special.value) > 0 ||
         parseInt(form.plate.value) > 0 ||
         form.drink.value !== "0";
-  
-      const hasTable = form.table.value !== "";
-  
-      submitBtn.disabled = !(hasOrder && hasTable);
-      document.getElementById('thanksMessage').style.display = 'none';
+
+      submitBtn.disabled = !hasOrder || !TABLE_NUMBER;
+      thanksMessage.style.display = 'none';
     });
-  
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-  
+
       const data = {
-  table_number: form.table.value, // ← 変更
-  parfait: parseInt(form.parfait.value),
-  special: parseInt(form.special.value),
-  plate: parseInt(form.plate.value),
-  drink: form.drink.value,
-  message: form.message.value.trim()
-};
-  
+        table_number: TABLE_NUMBER,
+        parfait: parseInt(form.parfait.value),
+        special: parseInt(form.special.value),
+        plate: parseInt(form.plate.value),
+        drink: form.drink.value,
+        message: form.message.value.trim()
+      };
+
       try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`, {
           method: "POST",
@@ -218,12 +212,12 @@
           },
           body: JSON.stringify(data)
         });
-  
+
         if (response.ok) {
           alert("ご注文ありがとうございました！");
           form.reset();
           submitBtn.disabled = true;
-          document.getElementById('thanksMessage').style.display = 'block';
+          thanksMessage.style.display = 'block';
         } else {
           alert("送信エラーが発生しました。");
           console.error(await response.text());
@@ -234,6 +228,5 @@
       }
     });
   </script>
-  
 </body>
 </html>
