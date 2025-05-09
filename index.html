@@ -163,22 +163,23 @@
 
   <script>
   // 🔽 ここが追加部分
-  window.addEventListener('DOMContentLoaded', () => {
-    const params = new URLSearchParams(window.location.search);
-    const tableParam = params.get('table');
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const tableParam = params.get('table');
 
-    if (tableParam) {
-      // セレクトボックスに自動反映
-      const tableSelect = document.getElementById('table');
-      if (tableSelect) tableSelect.value = tableParam;
-
-      // 表示エリアにテーブル番号を表示
-      const tableDisplay = document.getElementById('tableDisplay');
-      if (tableDisplay) {
-        tableDisplay.textContent = `テーブル番号：${tableParam}`;
-      }
+  if (tableParam) {
+    const tableSelect = document.getElementById('table');
+    if (tableSelect) {
+      tableSelect.value = tableParam;
+      tableSelect.dispatchEvent(new Event('change')); // ✅←ここでイベントを強制発火
     }
-  });
+
+    const tableDisplay = document.getElementById('tableDisplay');
+    if (tableDisplay) {
+      tableDisplay.textContent = `テーブル番号：${tableParam}`;
+    }
+  }
+});
 
   // 🔽 以下、あなたがもともと書いていた注文処理のコード
   const form = document.getElementById('orderForm');
