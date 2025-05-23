@@ -1,4 +1,3 @@
-<!-- 省略せず全コードです -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -19,7 +18,7 @@
     form {
       background: #ffffff;
       max-width: 500px;
-      margin: 0 auto;
+      margin: 0 auto 40px;
       padding: 20px;
       border-radius: 0px;
       box-shadow: 0 0 10px rgba(216, 108, 155, 0.3);
@@ -88,6 +87,30 @@
       font-size: 14px;
       margin-bottom: 5px;
     }
+    #history {
+      max-width: 500px;
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 0px;
+      box-shadow: 0 0 10px rgba(216, 108, 155, 0.2);
+      padding: 20px;
+    }
+    #history h2 {
+      text-align: center;
+      color: #d86c9b;
+    }
+    .history-item {
+      border-bottom: 1px solid #eee;
+      padding: 10px 0;
+    }
+    .history-item:last-child {
+      border-bottom: none;
+    }
+    .history-time {
+      color: #888;
+      font-size: 0.9em;
+    }
     @media (max-width: 600px) {
       .menu-item {
         width: 100%;
@@ -98,9 +121,12 @@
 <body>
   <h1>スイーツカフェ セルフオーダーQR</h1>
   <p id="tableDisplay" style="text-align:center; font-size:1.2em; color:#d86c9b;"></p>
+  
   <form id="orderForm">
-<input type="hidden" id="table" name="table" value="">
+    <input type="hidden" id="table" name="table" value="">
+
     <div class="menu-container">
+      <!-- パフェ -->
       <div class="menu-item">
         <img src="images/parfait.jpg" alt="スイーツパフェ">
         <div class="menu-select">
@@ -112,7 +138,7 @@
           </select>
         </div>
       </div>
-
+      <!-- スペシャルパフェ -->
       <div class="menu-item">
         <img src="images/special.jpg" alt="スペシャルパフェ">
         <div class="menu-select">
@@ -124,7 +150,7 @@
           </select>
         </div>
       </div>
-
+      <!-- スイーツプレート -->
       <div class="menu-item">
         <img src="images/plate.jpg" alt="スイーツプレート">
         <div class="menu-select">
@@ -136,7 +162,7 @@
           </select>
         </div>
       </div>
-
+      <!-- ドリンク -->
       <div class="menu-item">
         <img src="images/drink.jpg" alt="ドリンク">
         <div class="menu-select">
@@ -152,7 +178,7 @@
       </div>
     </div>
 
-  <label for="message">お店への連絡</label>
+    <label for="message">お店への連絡</label>
     <textarea id="message" name="message" placeholder="アレルギー、テーブル上の要望など"></textarea>
 
     <div class="submit-row">
@@ -161,27 +187,13 @@
     </div>
   </form>
 
+  <!-- 注文履歴の表示部分 -->
+  <div id="history">
+    <h2>注文履歴</h2>
+    <div id="historyList"></div>
+  </div>
+
   <script>
-  // 🔽 ここが追加部分
-window.addEventListener('DOMContentLoaded', () => {
-  const params = new URLSearchParams(window.location.search);
-  const tableParam = params.get('table');
-
-  if (tableParam) {
-    const tableSelect = document.getElementById('table');
-    if (tableSelect) {
-      tableSelect.value = tableParam;
-      tableSelect.dispatchEvent(new Event('change')); // ✅←ここでイベントを強制発火
-    }
-
-    const tableDisplay = document.getElementById('tableDisplay');
-    if (tableDisplay) {
-      tableDisplay.textContent = `テーブル番号：${tableParam}`;
-    }
-  }
-});
-
-  // 🔽 以下、あなたがもともと書いていた注文処理のコード
   const form = document.getElementById('orderForm');
   const submitBtn = document.getElementById('submitBtn');
 
@@ -189,19 +201,34 @@ window.addEventListener('DOMContentLoaded', () => {
   const SUPABASE_TABLE = "orders";
   const SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkZ2Rna29senZ5bXZodHdjY3loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1OTkwMzEsImV4cCI6MjA1ODE3NTAzMX0.YFWg6dpsmC-msTlk9j4a8smc0TnZB2eI3l0HhF1GLH8";
 
+  // テーブル番号取得と表示
+  window.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const tableParam = params.get('table');
+
+    if (tableParam) {
+      const tableInput = document.getElementById('table');
+      tableInput.value = tableParam;
+      tableInput.dispatchEvent(new Event('change'));
+
+      document.getElementById('tableDisplay').textContent = `テーブル番号：${tableParam}`;
+      fetchOrderHistory(tableParam); // ✅ 履歴を取得
+    }
+  });
+
+  // フォーム入力確認
   form.addEventListener('change', () => {
     const hasOrder =
       parseInt(form.parfait.value) > 0 ||
       parseInt(form.special.value) > 0 ||
       parseInt(form.plate.value) > 0 ||
       form.drink.value !== "0";
-
     const hasTable = form.table.value !== "";
-
     submitBtn.disabled = !(hasOrder && hasTable);
     document.getElementById('thanksMessage').style.display = 'none';
   });
 
+  // 注文送信
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -211,7 +238,8 @@ window.addEventListener('DOMContentLoaded', () => {
       special: parseInt(form.special.value),
       plate: parseInt(form.plate.value),
       drink: form.drink.value,
-      message: form.message.value.trim()
+      message: form.message.value.trim(),
+      created_at: new Date().toISOString()
     };
 
     try {
@@ -231,6 +259,7 @@ window.addEventListener('DOMContentLoaded', () => {
         form.reset();
         submitBtn.disabled = true;
         document.getElementById('thanksMessage').style.display = 'block';
+        fetchOrderHistory(data.table_number); // ✅ 新しい注文を取得して表示
       } else {
         alert("送信エラーが発生しました。");
         console.error(await response.text());
@@ -240,6 +269,39 @@ window.addEventListener('DOMContentLoaded', () => {
       console.error(error);
     }
   });
-</script>
+
+  // 履歴取得関数
+  async function fetchOrderHistory(tableNumber) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?table_number=eq.${tableNumber}&order=created_at.desc`, {
+        headers: {
+          "apikey": SUPABASE_API_KEY,
+          "Authorization": `Bearer ${SUPABASE_API_KEY}`
+        }
+      });
+
+      const orders = await res.json();
+      const historyList = document.getElementById("historyList");
+      historyList.innerHTML = "";
+
+      if (orders.length === 0) {
+        historyList.innerHTML = "<p>注文履歴がありません。</p>";
+        return;
+      }
+
+      for (const order of orders) {
+        const item = document.createElement("div");
+        item.className = "history-item";
+        item.innerHTML = `
+          <div class="history-time">${new Date(order.created_at).toLocaleString()}</div>
+          <div>スイーツパフェ：${order.parfait} / スペシャルパフェ：${order.special} / スイーツプレート：${order.plate} / ドリンク：${order.drink || "なし"}</div>
+        `;
+        historyList.appendChild(item);
+      }
+    } catch (error) {
+      console.error("注文履歴の取得に失敗しました:", error);
+    }
+  }
+  </script>
 </body>
 </html>
